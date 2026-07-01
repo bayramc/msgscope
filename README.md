@@ -129,6 +129,34 @@ Mutations: `set-hasattach`, `future-delivery`, `reverse-times`. See
 [CONTRIBUTING.md](CONTRIBUTING.md) for validating against a real known-good
 corpus.
 
+### Tamper with a file by hand
+
+The **golden rule: always work on a copy** (`cp original.msg mine.msg`) —
+`msgscope` never writes, but you are about to.
+
+The core primitive is: find a 16-byte property entry, change its 8-byte value,
+and write the stream back at the *same size* (all `olefile` allows in place):
+
+```python
+import olefile, struct
+
+ole = olefile.OleFileIO("mine.msg", write_mode=True)
+data = bytearray(ole.openstream("__properties_version1.0").read())
+for off in range(32, len(data) - 15, 16):            # entries follow the 32-byte header
+    if struct.unpack_from("<I", data, off)[0] == 0x0E070003:   # PidTagMessageFlags
+        flags = struct.unpack_from("<I", data, off + 8)[0]
+        struct.pack_into("<I", data, off + 8, flags | 0x10)    # force HASATTACH on
+ole.write_stream("__properties_version1.0", bytes(data))
+ole.close()
+```
+
+Then `msgscope inspect mine.msg` catches it, and the input's SHA-256 changes.
+
+Prefer a **hex editor** (e.g. Hex Fiend on macOS)? Random byte-flips usually just
+corrupt the container (`msgscope` then reports `is_cfb: false` — itself a signal).
+To edit a *specific* field, first run `msgscope` on a script-tampered copy: it
+prints the exact `offset=0x…` of the value it flagged, so you know where to edit.
+
 ---
 
 ## Check catalog

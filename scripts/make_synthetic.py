@@ -22,7 +22,7 @@ from pathlib import Path
 # Make tests/fixtures importable when run from the repo root.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tests"))
 
-from fixtures.builders import good_message  # noqa: E402
+from fixtures.builders import good_message  # type: ignore[import-not-found]  # noqa: E402
 from msgscope import properties as P  # noqa: E402
 
 
