@@ -68,10 +68,23 @@ my_detector = "my_pkg.checks:MyCheck"
 - **Never commit real evidence or PII.** Only the tiny, synthetic, content-free
   files under `sample/` are tracked.
 - Keep real known-good exports and third-party-generated known-synthetic files
-  locally under `corpus/` (git-ignored). To source known-good files, save
-  messages from a real Outlook install (a `pywin32` script can automate this on
-  Windows — run it locally, not in CI). Scrub subjects, bodies, addresses, and
-  names before sharing anything.
+  locally under `corpus/` (git-ignored). To source known-good files, run
+  `scripts/capture_corpus.py` on a Windows machine with Outlook + pywin32
+  installed:
+
+  ```console
+  python scripts/capture_corpus.py --folder Inbox --count 20 --out corpus/good
+  ```
+
+  Put third-party-generated files under `corpus/synthetic/`. Then validate:
+
+  ```console
+  pytest tests/test_corpus.py     # known-good must yield zero findings
+  ```
+
+  `tests/test_corpus.py` skips automatically when the corpus folders are empty,
+  so CI stays green. Scrub subjects, bodies, addresses, and names before sharing
+  anything.
 - CI depends only on the in-repo CFB writer, so tests are reproducible and
   license-clean.
 
