@@ -29,7 +29,7 @@ is written to be explainable in plain language to a non-technical stakeholder
 ### Standalone binary (no Python required)
 
 Download the binary for your platform from the
-[Releases](https://github.com/OWNER/msgscope/releases) page, then verify it
+[Releases](https://github.com/bayramc/msgscope/releases) page, then verify it
 against the published `SHA256SUMS` (see [Verifying downloads](#verifying-downloads)).
 
 ### With pipx (developers / pipelines)

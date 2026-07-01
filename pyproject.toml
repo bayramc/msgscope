@@ -9,7 +9,7 @@ description = "Read-only structural-integrity / tamper inspector for Outlook .ms
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
-authors = [{ name = "msgscope contributors" }]
+authors = [{ name = "Bayram Cetinkaya" }]
 keywords = ["forensics", "ediscovery", "msg", "outlook", "ms-oxmsg", "cfb", "tamper"]
 classifiers = [
     "Development Status :: 3 - Alpha",
@@ -28,8 +28,8 @@ classifiers = [
 dependencies = ["olefile>=0.47"]
 
 [project.urls]
-Homepage = "https://github.com/OWNER/msgscope"
-Issues = "https://github.com/OWNER/msgscope/issues"
+Homepage = "https://github.com/bayramc/msgscope"
+Issues = "https://github.com/bayramc/msgscope/issues"
 
 [project.optional-dependencies]
 dev = [
