@@ -1,0 +1,75 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "msgscope"
+version = "0.1.0"
+description = "Read-only structural-integrity / tamper inspector for Outlook .msg files (indicators, not verdicts)."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "msgscope contributors" }]
+keywords = ["forensics", "ediscovery", "msg", "outlook", "ms-oxmsg", "cfb", "tamper"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Legal Industry",
+    "Intended Audience :: Information Technology",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Security",
+    "Topic :: Utilities",
+]
+dependencies = ["olefile>=0.47"]
+
+[project.urls]
+Homepage = "https://github.com/OWNER/msgscope"
+Issues = "https://github.com/OWNER/msgscope/issues"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "ruff>=0.6",
+    "mypy>=1.11",
+    "build>=1.2",
+]
+
+[project.scripts]
+msgscope = "msgscope.cli:main"
+
+# Built-in detectors are advertised through the same plugin group third parties use.
+[project.entry-points."msgscope.checks"]
+# (built-ins are registered on import of msgscope.checks; this group is the
+# extension point for external detector packages.)
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/msgscope"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "ARG"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["ARG", "B"]
+
+[tool.mypy]
+python_version = "3.11"
+packages = ["msgscope"]
+mypy_path = "src"
+ignore_missing_imports = true
+warn_unused_ignores = false

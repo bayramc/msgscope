@@ -1,0 +1,130 @@
+name: Release
+
+# Runs ONLY on version tags. Builds standalone binaries, generates SHA256SUMS,
+# publishes to PyPI, and creates the GitHub Release.
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: read
+
+jobs:
+  build-binaries:
+    name: binary (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact: msgscope-linux-x86_64
+          - os: macos-latest
+            artifact: msgscope-macos-arm64
+          - os: windows-latest
+            artifact: msgscope-windows-x86_64.exe
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install project + PyInstaller
+        run: python -m pip install . pyinstaller
+
+      - name: Reproducible build timestamp
+        shell: bash
+        run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> "$GITHUB_ENV"
+
+      - name: Build single-file executable
+        shell: bash
+        run: |
+          pyinstaller --onefile --name msgscope packaging/pyinstaller_entry.py
+          mkdir -p out
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            mv dist/msgscope.exe "out/${{ matrix.artifact }}"
+          else
+            mv dist/msgscope "out/${{ matrix.artifact }}"
+          fi
+
+      - name: Smoke-test the binary
+        shell: bash
+        run: "out/${{ matrix.artifact }} inspect sample/synthetic_orphan.msg --reproducible"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: out/${{ matrix.artifact }}
+
+  build-dist:
+    name: sdist + wheel
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install build
+      - run: python -m build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: python-dist
+          path: dist/*
+
+  checksums:
+    name: SHA256SUMS
+    needs: [build-binaries, build-dist]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+      - name: Generate SHA256SUMS (CI-generated, never by hand)
+        run: |
+          cd artifacts
+          sha256sum * | tee ../SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SHA256SUMS
+          path: SHA256SUMS
+
+  publish-pypi:
+    name: Publish to PyPI
+    needs: [build-dist]
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write # OIDC trusted publishing; no stored token
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: python-dist
+          path: dist
+      - uses: pypa/gh-action-pypi-publish@release/v1
+
+  release:
+    name: GitHub Release
+    needs: [checksums, publish-pypi]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # create the release and upload assets
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: assets
+          merge-multiple: true
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: .github/release-notes-template.md
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          fail_on_unmatched_files: true
+          files: |
+            assets/msgscope-*
+            assets/SHA256SUMS
+            assets/*.whl
+            assets/*.tar.gz
