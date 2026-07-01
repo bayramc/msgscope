@@ -106,6 +106,31 @@ Indicators only - a human examiner draws the conclusion.
 
 ---
 
+## Try it against fake / tampered files
+
+Two helper scripts let you see the detectors fire without needing real evidence.
+
+**Generate synthetic files** (one anomaly each, no personal data):
+
+```console
+python scripts/make_synthetic.py --out corpus/synthetic
+msgscope inspect corpus/synthetic/orphan_stream.msg
+```
+
+**Tamper with an existing message** (edits a *copy*; the original is never
+touched) — simulates someone altering a genuine file:
+
+```console
+python scripts/tamper_msg.py --in real.msg --out tampered.msg --mutation set-hasattach
+msgscope inspect tampered.msg
+```
+
+Mutations: `set-hasattach`, `future-delivery`, `reverse-times`. See
+[CONTRIBUTING.md](CONTRIBUTING.md) for validating against a real known-good
+corpus.
+
+---
+
 ## Check catalog
 
 | id | default severity | what it checks |
